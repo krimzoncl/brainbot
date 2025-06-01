@@ -47,3 +47,4 @@ Negocios certificados en Puerto Varas:
     return res.status(500).json({ reply: "Ocurrió un error en el servidor." });
   }
 }
+
