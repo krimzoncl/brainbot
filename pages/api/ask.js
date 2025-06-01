@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     const { message } = req.body;
 
     if (!message) {
-      return res.status(400).json({ error: 'Mensaje vacío' });
+      return res.status(400).json({ error: "Mensaje vacío" });
     }
 
     const context = `
@@ -14,35 +14,34 @@ Negocios certificados en Puerto Varas:
 4. Restaurante Brisa Sur - Av. Costanera 2200
 `;
 
-    const prompt = `Contexto:\n${context}\n\nPregunta del usuario: ${message}\n\nRespuesta del asistente turístico:`;
+    const prompt = `Eres un asistente turístico de Puerto Varas. Recomendá solo negocios certificados del siguiente listado:\n${context}\n\nPregunta del usuario:\n${message}\n\nRespuesta del asistente:`;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+
+    const response = await fetch("https://api.cohere.ai/v1/chat", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${process.env.COHERE_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          { role: "system", content: "Eres un asistente turístico de Puerto Varas que solo recomienda negocios certificados de una lista fija." },
-          { role: "user", content: prompt }
-        ]
+        model: "command-r-plus", // mejor calidad
+        message: prompt,
+        temperature: 0.7,
       })
     });
 
     const data = await response.json();
 
-    console.log("Respuesta de OpenAI:", JSON.stringify(data));
+    console.log("Respuesta de Cohere:", JSON.stringify(data));
 
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!data.text) {
       return res.status(500).json({ reply: "No encontré respuesta." });
     }
 
-    return res.status(200).json({ reply: data.choices[0].message.content });
+    return res.status(200).json({ reply: data.text });
 
   } catch (error) {
-    console.error("Error al llamar a OpenAI:", error);
+    console.error("Error al llamar a Cohere:", error);
     return res.status(500).json({ reply: "Ocurrió un error en el servidor." });
   }
 }
