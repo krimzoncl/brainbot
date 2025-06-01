@@ -21,7 +21,7 @@ export default function Home() {
 
   return (
     <div style={{ padding: 20, fontFamily: 'Arial' }}>
-      <h1>Chat Turístico Puerto Varas</h1>
+      <h1>Chat Brain</h1>
       <div style={{ marginBottom: 10 }}>
         {messages.map((msg, idx) => (
           <div key={idx} style={{ textAlign: msg.from === 'user' ? 'right' : 'left' }}>
