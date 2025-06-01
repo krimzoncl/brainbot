@@ -25,8 +25,23 @@ export default async function handler(req, res) {
       `${i + 1}. ${item.nombre} (${item.tipo}) - ${item.contacto}`
     )).join("\n");
 
-    // 2. Armar prompt
-    const prompt = `Eres un asistente turístico de Puerto Varas. Recomienda solo negocios certificados del siguiente listado:\n${context}\n\nPregunta del usuario:\n${message}\n\nRespuesta del asistente:`;
+    // 2. Armar prompt mejorado
+    const prompt = `Actúa como BrainBot, un asistente turístico amable y útil de Puerto Varas. Siempre responde con un tono cálido y breve. 
+
+Primero saluda y pregunta:
+- ¿A dónde vas a viajar?
+- ¿Cuántas personas son?
+- ¿Cuántos días estarán?
+
+Solo después de tener esa información, sugiere alojamientos o actividades.
+
+Usa únicamente este listado de negocios certificados:
+${context}
+
+Pregunta del usuario:
+${message}
+
+Respuesta de BrainBot:`;
 
     // 3. Llamar a Cohere
     const response = await fetch("https://api.cohere.ai/v1/chat", {
