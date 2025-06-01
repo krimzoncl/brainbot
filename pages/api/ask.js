@@ -1,33 +1,48 @@
 export default async function handler(req, res) {
-  const { message } = req.body;
+  try {
+    const { message } = req.body;
 
-  const negocios = `
-1. **Cabañas Lago Sur** - Alojamiento familiar con vista al lago. 📞 +56912345678
-2. **Café Puerto Dulce** - Cafetería con repostería local. 📸 Instagram: @puertodulce
-3. **Tour Volcán Osorno** - Operador turístico con salidas diarias. 🌐 www.volcanosorno.cl
-4. **Hostal Patagón** - Económico, céntrico. 📞 +56987654321
-5. **Restaurante Brisa Sur** - Comida chilena con vista al lago. 📍 Av. Costanera 2200
+    if (!message) {
+      return res.status(400).json({ error: 'Mensaje vacío' });
+    }
+
+    const context = `
+Negocios certificados en Puerto Varas:
+1. Cabañas Lago Sur - +56912345678
+2. Café Puerto Dulce - Instagram @puertodulce
+3. Tour Volcán Osorno - www.volcanosorno.cl
+4. Restaurante Brisa Sur - Av. Costanera 2200
 `;
 
-  const prompt = `Estás ayudando a un turista que va a Puerto Varas. Solo recomiendas negocios certificados. Estos son los negocios disponibles:\n${negocios}\n\nPregunta del turista: ${message}\n\nResponde de forma útil, cálida y con datos concretos (nombres, links o teléfonos si hay).`;
+    const prompt = `Contexto:\n${context}\n\nPregunta del usuario: ${message}\n\nRespuesta del asistente turístico:`;
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "Eres un asistente turístico de Puerto Varas, directo y amigable. Solo recomiendas lugares certificados de la lista." },
-        { role: "user", content: prompt }
-      ]
-    })
-  });
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: [
+          { role: "system", content: "Eres un asistente turístico de Puerto Varas que solo recomienda negocios certificados de una lista fija." },
+          { role: "user", content: prompt }
+        ]
+      })
+    });
 
-  const data = await response.json();
-  const reply = data.choices?.[0]?.message?.content || "No encontré respuesta.";
+    const data = await response.json();
 
-  res.status(200).json({ reply });
+    console.log("Respuesta de OpenAI:", JSON.stringify(data));
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      return res.status(500).json({ reply: "No encontré respuesta." });
+    }
+
+    return res.status(200).json({ reply: data.choices[0].message.content });
+
+  } catch (error) {
+    console.error("Error al llamar a OpenAI:", error);
+    return res.status(500).json({ reply: "Ocurrió un error en el servidor." });
+  }
 }
