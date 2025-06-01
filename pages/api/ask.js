@@ -36,11 +36,10 @@ Negocios certificados en Puerto Varas:
 
     const data = await response.json();
 
-    if (!data.reply) {
-      return res.status(500).json({ reply: "No encontré respuesta." });
-    }
-
-    return res.status(200).json({ reply: data.reply });
+    if (!data.text) {
+  return res.status(500).json({ reply: "No encontré respuesta." });
+}
+return res.status(200).json({ reply: data.text });
 
   } catch (error) {
     console.error("Error al llamar a Cohere:", error);
