@@ -14,7 +14,7 @@ Negocios certificados en Puerto Varas:
 4. Restaurante Brisa Sur - Av. Costanera 2200
 `;
 
-    const prompt = `Eres un asistente turístico de Puerto Varas. Recomendá solo negocios certificados del siguiente listado:\n${context}\n\nPregunta del usuario:\n${message}\n\nRespuesta del asistente:`;
+    const prompt = `Eres un asistente turístico de Puerto Varas. Recomienda solo negocios certificados del siguiente listado:\n${context}\n\nPregunta del usuario:\n${message}\n\nRespuesta del asistente:`;
 
 
     const response = await fetch("https://api.cohere.ai/v1/chat", {
