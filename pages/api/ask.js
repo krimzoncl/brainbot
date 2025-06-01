@@ -14,31 +14,33 @@ Negocios certificados en Puerto Varas:
 4. Restaurante Brisa Sur - Av. Costanera 2200
 `;
 
-    const prompt = `Eres un asistente turístico de Puerto Varas. Recomienda solo negocios certificados del siguiente listado:\n${context}\n\nPregunta del usuario:\n${message}\n\nRespuesta del asistente:`;
-
-
     const response = await fetch("https://api.cohere.ai/v1/chat", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${process.env.COHERE_API_KEY}`,
+        Authorization: `Bearer ${process.env.COHERE_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "command-r-plus", // mejor calidad
-        message: prompt,
+        model: "command-r-plus",
         temperature: 0.7,
+        message: message,
+        chat_history: [],
+        connectors: [],
+        documents: [
+          {
+            text: context
+          }
+        ]
       })
     });
 
     const data = await response.json();
 
-    console.log("Respuesta de Cohere:", JSON.stringify(data));
-
-    if (!data.text) {
+    if (!data.reply) {
       return res.status(500).json({ reply: "No encontré respuesta." });
     }
 
-    return res.status(200).json({ reply: data.text });
+    return res.status(200).json({ reply: data.reply });
 
   } catch (error) {
     console.error("Error al llamar a Cohere:", error);
