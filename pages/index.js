@@ -4,7 +4,7 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([
     { sender: 'bot', text: 'Hola, soy tu asistente turístico.' },
-    { sender: 'bot', text: 'Te puedo ayudar a planificar tu viaje y encontrar las mejores opciones según tus intereses.' },
+    { sender: 'bot', text: 'Te puedo ayudar a planificar tu viaje y encontrar las mejores opciones según tus intereses.' }
   ]);
   const [loading, setLoading] = useState(false);
 
@@ -12,10 +12,10 @@ export default function Home() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const newMessages = [...messages, { sender: 'user', text: input }];
-    setMessages(newMessages);
-    setLoading(true);
+    const userMessage = { sender: 'user', text: input };
+    setMessages([...messages, userMessage]);
     setInput('');
+    setLoading(true);
 
     try {
       const res = await fetch('/api/ask', {
@@ -25,115 +25,99 @@ export default function Home() {
       });
 
       const data = await res.json();
-      setMessages([...newMessages, { sender: 'bot', text: data.reply }]);
+      const botMessage = { sender: 'bot', text: data.reply };
+      setMessages(prev => [...prev, botMessage]);
     } catch (err) {
-      setMessages([...newMessages, { sender: 'bot', text: 'Ocurrió un error. Intenta más tarde.' }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: 'Hubo un error. Intenta nuevamente.' }]);
     } finally {
       setLoading(false);
     }
   };
 
-  const styles = {
-    container: {
-      height: '100vh',
-      maxWidth: '400px',
-      margin: '0 auto',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: '#fff',
-      fontFamily: 'Arial, sans-serif',
-    },
-    chatBox: {
-      padding: '16px',
-    },
-    header: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      marginBottom: '16px',
-    },
-    avatar: {
-      width: '40px',
-      height: '40px',
-    },
-    title: {
-      fontWeight: 'bold',
-    },
-    subtitle: {
-      fontSize: '14px',
-      color: '#555',
-    },
-    messages: {
-      flex: 1,
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '8px',
-      padding: '0 16px',
-    },
-    message: {
-      maxWidth: '80%',
-      padding: '10px',
-      borderRadius: '12px',
-      fontSize: '14px',
-      lineHeight: '1.4',
-    },
-    inputContainer: {
-      display: 'flex',
-      padding: '16px',
-      borderTop: '1px solid #ccc',
-    },
-    input: {
-      flex: 1,
-      padding: '10px',
-      borderRadius: '20px',
-      border: '1px solid #ccc',
-    },
-  };
-
   return (
     <div style={styles.container}>
       <div style={styles.chatBox}>
-        <div style={styles.header}>
-          <img
-            src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMjJDMTAuMyAyMiA4LjYgMjEuMzUgNy4zIDIwLjM3TDQuNSAxOC41NEMyLjggMTcuMzUgMiAxNS4zMiAyIDEzLjI2VjguNzRDMiA2LjY4IDIuOCA0LjY1IDQuNSA..."
-            alt="robot"
-            style={styles.avatar}
-          />
-          <div>
-            <div style={styles.title}>BrainBot</div>
-            <div style={styles.subtitle}>Asistente turístico en Chile</div>
-          </div>
+        <div style={styles.messages}>
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              style={{
+                ...styles.message,
+                alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                backgroundColor: msg.sender === 'user' ? '#DCF8C6' : '#FFFFFF',
+                border: '1px solid #ddd'
+              }}
+            >
+              {msg.text}
+            </div>
+          ))}
+          {loading && (
+            <div style={{ ...styles.message, backgroundColor: '#FFFFFF', border: '1px solid #ddd' }}>Escribiendo...</div>
+          )}
         </div>
+        <form onSubmit={handleSubmit} style={styles.inputContainer}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Escribe tu mensaje..."
+            style={styles.input}
+          />
+        </form>
       </div>
-
-      <div style={styles.messages}>
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            style={{
-              ...styles.message,
-              alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-              backgroundColor: msg.sender === 'user' ? '#DCF8C6' : '#E6E6E6',
-            }}
-          >
-            {msg.text}
-          </div>
-        ))}
-        {loading && (
-          <div style={{ ...styles.message, backgroundColor: '#E6E6E6' }}>Escribiendo...</div>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit} style={styles.inputContainer}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Escribe tu mensaje..."
-          style={styles.input}
-        />
-      </form>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    height: '100vh',
+    width: '100%',
+    backgroundColor: '#E5DDD5',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10
+  },
+  chatBox: {
+    width: '100%',
+    maxWidth: 400,
+    height: '100%',
+    backgroundColor: '#F0F0F0',
+    borderRadius: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    boxShadow: '0 0 5px rgba(0,0,0,0.1)'
+  },
+  messages: {
+    flex: 1,
+    padding: '10px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    overflowY: 'auto',
+    backgroundColor: '#ECE5DD'
+  },
+  message: {
+    maxWidth: '75%',
+    padding: '10px 12px',
+    borderRadius: '7.5px',
+    fontSize: 14,
+    lineHeight: 1.4,
+    wordBreak: 'break-word'
+  },
+  inputContainer: {
+    padding: '10px',
+    backgroundColor: '#F0F0F0',
+    borderTop: '1px solid #ddd'
+  },
+  input: {
+    width: '100%',
+    padding: '10px',
+    fontSize: 14,
+    borderRadius: '20px',
+    border: '1px solid #ccc',
+    outline: 'none'
+  }
+};
