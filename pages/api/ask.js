@@ -21,28 +21,27 @@ export default async function handler(req, res) {
       }, {});
     });
 
-    const context = data.map((item, i) => (
-      `${i + 1}. ${item.nombre} (${item.tipo}) - ${item.contacto}`
-    )).join("\n");
+    const context = data
+      .filter(item => item.certificado?.toLowerCase() === "sí" || item.certificado?.toLowerCase() === "si")
+      .map((item, i) => (
+        `${i + 1}. ${item.nombre} (${item.tipo}) - ${item.contacto} - ${item.comuna}, ${item.descripcion}`
+      )).join("\n");
 
-    // 2. Armar prompt mejorado
-    const prompt = `Eres BrainBot, un asistente turístico amigable de Puerto Varas.
+    // 2. Armar prompt con enfoque nacional, validación Tripadvisor y tono preciso
+    const prompt = `Eres un asistente turístico en Chile. Antes de entregar cualquier recomendación, pregunta brevemente al usuario:
+1) ¿Dónde viajarás?
+2) ¿Con cuántas personas?
+3) ¿Cuántos días?
 
-Siempre empieza saludando y mostrando interés por el viaje del usuario, con un tono cercano y cálido. 
-Nunca des recomendaciones sin antes conocer lo siguiente:
+Luego, ofrece recomendaciones breves y precisas solo de negocios certificados según el listado, y que tengan buena valoración en TripAdvisor. Si no hay información suficiente, indica que no puedes recomendar con seguridad.
 
-1. ¿A dónde vas a viajar?
-2. ¿Cuántas personas son?
-3. ¿Cuántos días planean quedarse?
-
-Una vez que tengas esa información, puedes sugerir alojamientos o actividades **solo** desde esta lista de negocios certificados:
-
+Negocios certificados:
 ${context}
 
-Pregunta del usuario:
+Mensaje del usuario:
 ${message}
 
-Respuesta de BrainBot:`;
+Respuesta del asistente:`;
 
     // 3. Llamar a Cohere
     const response = await fetch("https://api.cohere.ai/v1/chat", {
@@ -54,7 +53,7 @@ Respuesta de BrainBot:`;
       body: JSON.stringify({
         model: "command-r-plus",
         message: prompt,
-        temperature: 0.7,
+        temperature: 0.5,
       })
     });
 
@@ -72,4 +71,3 @@ Respuesta de BrainBot:`;
     return res.status(500).json({ reply: "Ocurrió un error en el servidor." });
   }
 }
-
