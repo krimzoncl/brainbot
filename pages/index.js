@@ -1,14 +1,23 @@
 import { useState } from "react";
 
-export default function Home() {
-  const [messages, setMessages] = useState([]);
+const BOT_AVATAR =
+  "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAiIGhlaWdodD0iMzAiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMu
+b3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSI4IiBjeT0iOCIgcj0iOCIgc3R5bGU9ImZpbGw6I2RlZjsiLz48Y2lyY2xlIGN4PSI4IiBjeT0i
+OCIgci0iNiIgc3R5bGU9ImZpbGw6IzU1YjFhYjsiLz48L3N2Zz4=";
+
+export default function Chat() {
+  const [messages, setMessages] = useState([
+    {
+      from: "bot",
+      text: "Hola, soy tu asistente turístico. ¿Dónde viajarás, con cuántas personas y por cuántos días?"
+    }
+  ]);
   const [input, setInput] = useState("");
 
-  const handleSend = async () => {
-    if (!input) return;
-
-    const userMessage = { from: "user", text: input };
-    setMessages([...messages, userMessage]);
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+    const newMessages = [...messages, { from: "user", text: input }];
+    setMessages(newMessages);
     setInput("");
 
     const res = await fetch("/api/ask", {
@@ -18,86 +27,45 @@ export default function Home() {
     });
 
     const data = await res.json();
-    const botMessage = { from: "bot", text: data.reply };
-    setMessages(prev => [...prev, botMessage]);
+    setMessages([...newMessages, { from: "bot", text: data.reply }]);
   };
 
   return (
-    <div className="chat-container">
-      <h2>Chat Brain</h2>
-      <div className="chat-box">
+    <div className="flex flex-col items-center justify-between h-screen max-w-sm mx-auto bg-[#ece5dd] p-4">
+      <div className="mb-2">
+        <h1 className="text-green-700 font-semibold text-lg">Hola, soy tu asistente turístico</h1>
+        <p className="text-sm text-gray-700">Te puedo ayudar a planificar tu viaje y encontrar las mejores opciones según tus intereses</p>
+      </div>
+
+      <div className="flex-1 w-full overflow-y-auto space-y-3 mt-4">
         {messages.map((msg, i) => (
-          <div key={i} className={`bubble ${msg.from}`}>
-            {msg.text}
+          <div key={i} className={`flex ${msg.from === "bot" ? "items-start" : "justify-end"}`}>
+            {msg.from === "bot" && (
+              <img src={BOT_AVATAR} className="w-6 h-6 mr-2 mt-1" alt="bot avatar" />
+            )}
+            <div className={`rounded-xl px-4 py-2 text-sm max-w-[75%] ${msg.from === "bot" ? "bg-white text-gray-800" : "bg-[#dcf8c6] text-black"}`}>
+              {msg.text}
+            </div>
           </div>
         ))}
       </div>
-      <div className="input-box">
+
+      <div className="w-full mt-4 flex items-center gap-2">
         <input
+          type="text"
+          placeholder="Escribe tu mensaje..."
+          className="flex-1 rounded-full px-4 py-2 text-sm border border-gray-300 focus:outline-none"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Escribe tu mensaje..."
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button onClick={handleSend}>Enviar</button>
+        <button
+          onClick={sendMessage}
+          className="bg-green-500 text-white rounded-full px-4 py-2 text-sm font-medium"
+        >
+          Enviar
+        </button>
       </div>
-
-      <style jsx>{`
-        .chat-container {
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 1rem;
-          font-family: sans-serif;
-        }
-        h2 {
-          text-align: center;
-          color: #444;
-        }
-        .chat-box {
-          height: 400px;
-          overflow-y: auto;
-          border: 1px solid #ddd;
-          padding: 1rem;
-          background: #f9f9f9;
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-        .bubble {
-          padding: 0.75rem 1rem;
-          border-radius: 15px;
-          max-width: 70%;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .user {
-          align-self: flex-end;
-          background-color: #dcf8c6;
-        }
-        .bot {
-          align-self: flex-start;
-          background-color: #fff;
-        }
-        .input-box {
-          display: flex;
-          gap: 0.5rem;
-          margin-top: 1rem;
-        }
-        input {
-          flex: 1;
-          padding: 0.5rem;
-          font-size: 1rem;
-        }
-        button {
-          padding: 0.5rem 1rem;
-          font-size: 1rem;
-          background: #4caf50;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-      `}</style>
     </div>
   );
 }
-
