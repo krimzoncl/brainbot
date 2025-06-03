@@ -1,9 +1,9 @@
 export default async function handler(req, res) {
   try {
-    const { message } = req.body;
+    const { destino, personas, dias } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ error: "Mensaje vacío" });
+    if (!destino || !personas || !dias) {
+      return res.status(400).json({ error: "Faltan datos para generar recomendaciones." });
     }
 
     // 1. Leer negocios desde Google Sheet como CSV
@@ -21,29 +21,29 @@ export default async function handler(req, res) {
       }, {});
     });
 
-    const context = data
-      .filter(item => item.certificado?.toLowerCase() === "sí" || item.certificado?.toLowerCase() === "si")
-      .map((item, i) => (
-        `${i + 1}. ${item.nombre} (${item.tipo}) - ${item.contacto} - ${item.comuna}, ${item.descripcion}`
-      )).join("\n");
+    // 2. Filtrar por certificado y con posible mención a TripAdvisor
+    const certificados = data.filter(item =>
+      item.certificado?.toLowerCase() === 'sí' &&
+      (item.web?.toLowerCase().includes('tripadvisor') || item.descripcion?.toLowerCase().includes('tripadvisor'))
+    );
 
-    // 2. Armar prompt con enfoque nacional, validación Tripadvisor y tono preciso
-    const prompt = `Eres un asistente turístico en Chile. Antes de entregar cualquier recomendación, pregunta brevemente al usuario:
-1) ¿Dónde viajarás?
-2) ¿Con cuántas personas?
-3) ¿Cuántos días?
+    const context = certificados.map((item, i) => (
+      `${i + 1}. ${item.nombre} (${item.tipo}) - ${item.descripcion || 'Sin descripción'} - ${item.comuna} - ${item.contacto}`
+    )).join("\n");
 
-Luego, ofrece recomendaciones breves y precisas solo de negocios certificados según el listado, y que tengan buena valoración en TripAdvisor. Si no hay información suficiente, indica que no puedes recomendar con seguridad.
+    // 3. Prompt mejorado
+    const prompt = `Eres un asistente turístico chileno. Basado en este listado de negocios certificados con buena reputación (algunos en TripAdvisor), responde de forma breve, clara y simpática a esta solicitud:
 
-Negocios certificados:
+Destino: ${destino}
+Cantidad de personas: ${personas}
+Duración del viaje: ${dias} días
+
+Listado:
 ${context}
 
-Mensaje del usuario:
-${message}
+Recomienda solo si hay coincidencias útiles para ese destino. Si no hay coincidencias, sugiere alternativas cercanas o explica que no tienes opciones disponibles. No inventes datos. Responde como un asistente conversacional.`
 
-Respuesta del asistente:`;
-
-    // 3. Llamar a Cohere
+    // 4. Llamar a Cohere
     const response = await fetch("https://api.cohere.ai/v1/chat", {
       method: "POST",
       headers: {
@@ -53,7 +53,7 @@ Respuesta del asistente:`;
       body: JSON.stringify({
         model: "command-r-plus",
         message: prompt,
-        temperature: 0.5,
+        temperature: 0.6,
       })
     });
 
